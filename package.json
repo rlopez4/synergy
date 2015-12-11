@@ -1,0 +1,26 @@
+{
+  "name": "synergy",
+  "version": "0.0.1",
+  "description": "small web app to get around work proxy",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rlopez4/synergy.git"
+  },
+  "author": "rlopez@sporks.io",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rlopez4/synergy/issues"
+  },
+  "homepage": "https://github.com/rlopez4/synergy#readme",
+  "dependencies": {
+    "express": "^4.13.3",
+    "express-stormpath": "^2.3.2",
+    "express-winston": "^0.4.1",
+    "lodash": "^3.10.1",
+    "winston": "^2.1.1"
+  }
+}
