@@ -1,13 +1,18 @@
-var express = require('express');
-var stormpath = require('express-stormpath');
-var expressWinston = require('express-winston');
-var winston = require('winston');
-var logger = require('./logger');
+var express         = require('express');
+var stormpath       = require('express-stormpath');
+var expressWinston  = require('express-winston');
+var winston         = require('winston');
+var exphbs          = require('express-handlebars');
+
+var logger          = require('./logger');
 
 var app = express();
 var router = express.Router();
 
 var serverPort = process.env.PORT || 8000;
+
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
 
 app.use(expressWinston.logger({
   transports: [logger],
@@ -32,6 +37,10 @@ app.use(stormpath.init(app, {
   website: true
 }));
 
+
+app.get('/', stormpath.loginRequired, function (req, res) {
+    res.render('home');
+});
 
 app.on('stormpath.ready', function () {
   app.listen(serverPort, function() {

@@ -18,6 +18,7 @@
   "homepage": "https://github.com/rlopez4/synergy#readme",
   "dependencies": {
     "express": "^4.13.3",
+    "express-handlebars": "^2.0.1",
     "express-stormpath": "^2.3.2",
     "express-winston": "^0.4.1",
     "lodash": "^3.10.1",
