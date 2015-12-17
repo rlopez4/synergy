@@ -22,6 +22,7 @@
     "express-stormpath": "^2.3.2",
     "express-winston": "^0.4.1",
     "lodash": "^3.10.1",
+    "prettyjson": "^1.1.3",
     "winston": "^2.1.1"
   }
 }
