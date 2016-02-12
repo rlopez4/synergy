@@ -29,6 +29,8 @@ var logger = new(winston.Logger)({
       level: 'info',
       colorize: true,
       timestamp: true,
+      humanReadableUnhandledException: true,
+  handleExceptions: true,
       json: false
     }),
     new (winston.transports.File)({

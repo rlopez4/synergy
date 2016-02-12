@@ -1,5 +1,13 @@
-<div class="row">
-  <div class="col-xs-12">
-    <h1>Welcome {{user.fullName}}</h1>
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-4">Welcome&nbsp;{{user.fullName}}</h1>
+    <p class="lead">Feel free to add and download crap on here. But don't get too crazy because I'll be watching.</p>
+    <hr class="m-y-2">
+    <p>Use the form below to add files.</p>
+    <button id="add-file-btn" type="button" class="btn btn-primary">Add File</button>
+  </div>
+</div>
+<div class="container">
+  <div id="files-container">
   </div>
 </div>
