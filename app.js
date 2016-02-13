@@ -53,11 +53,28 @@ app.use(stormpath.init(app, {
   application: {
     href: process.env['STORMPATH_APPLICATION_HREF']
   },
-  website: true
+  expand: {
+    customData: true,
+  },
+  website: true,
+  postRegistrationHandler: function (account, req, res, next) {
+    logger.info('User:', account.email, 'just registered');
+
+    // attach the files array on account create
+    account.getCustomData(function(err, customData) {
+      customData.files = [];
+      customData.save(function(error) {
+        if (error) {
+          logger.error(error);
+        }
+      });
+    });
+
+    next();
+  }
 }));
 
 var IGNORED_FILES = ['.DS_Store', '.keep']
-
 
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
@@ -70,25 +87,78 @@ app.get('/', stormpath.loginRequired, function (req, res) {
 });
 
 app.get('/files', stormpath.loginRequired, function(req, res) {
-  var files = fs.readdirSync(privateDir);
-  res.json(_.pullAll(files, IGNORED_FILES));
+  var files = [];
+
+  // get the list of all files
+  var currFiles = _.pullAll(fs.readdirSync(privateDir), IGNORED_FILES);
+
+  if (currFiles && currFiles.length > 0) {
+    files = currFiles;
+
+    // create a map of the user's files
+    var userFiles = {};
+    req.user.customData.files.forEach(function(file) {
+      userFiles[file.fileName] = file;
+    });
+
+    // create the list of file objects
+    files = files.map(function(fileName) {
+      var fileObj = {fileName: fileName};
+      var userFile = userFiles[fileName];
+
+      // add extra fields if this is a user's files
+      if (userFile) {
+        fileObj.isUserFile = true;
+        fileObj.created = userFile.created;
+      }
+
+      return fileObj;
+    });
+  }
+
+  res.json({files: files});
 });
 
 app.post('/file', stormpath.loginRequired, function(req, res) {
   var url = req.body.url;
   var fileName = req.body.fileName;
 
+  // make sure that the url was provided at least
   if (!url) {
     res.json({
       error: 'Url is required!'
     });
   }
   else {
+
+    // start the download!
     download({
       uri: url,
       fileName: fileName,
       done: function(data) {
-        res.json(data);
+        data.created = new Date().getTime();
+
+        // this is only here to attempt to save the files array again if
+        // it wasn't added at account creation due to error
+        if (!req.user.customData.files || !req.user.customData.files.length) {
+          req.user.customData.files = [];
+        }
+
+        // push the filename onto the list of files
+        req.user.customData.files.push(data);
+
+        // save the user
+        req.user.customData.save(function(e) {
+          if (e) {
+            res.json({error: e});
+          }
+          else {
+            // update this property for the response
+            data.isUserFile = true;
+            res.json(data);
+          }
+        });
+
       },
       error: function(e) {
         res.json({

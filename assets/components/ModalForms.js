@@ -1,11 +1,12 @@
 import React from 'react';
 import UrlForm from './UrlForm';
+import FileActions from '../lib/FileActions';
 
 const ModalForms = React.createClass({
   componentDidMount() {
-    $('#synergy-modal').on('hidden.bs.modal', $.proxy(function() {
+    $('#synergy-modal').on('hidden.bs.modal', function() {
       this.refs.urlForm.clearForm();
-    }, this));
+    }.bind(this));
   },
   componentWillUnmount() {
     $('#synergy-modal').off('hidden.bs.modal');
@@ -13,11 +14,14 @@ const ModalForms = React.createClass({
   handleFormSubmit(data) {
     $.post('/file', data)
       .done(function(result) {
-        console.log('sucess', result);
+        FileActions.addItem(result);
       }.bind(this))
       .fail(function(e) {
         console.log('error', e);
-      }.bind(this));
+      }.bind(this))
+      .always(() => {
+        $('#synergy-modal').modal('hide');
+      });
   },
   render() {
     return (

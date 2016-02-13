@@ -34,7 +34,6 @@ const UrlForm = React.createClass({
 
     if (!urlVal) {
       console.log('need url');
-      // add errors
       return;
     }
 
@@ -57,17 +56,19 @@ const UrlForm = React.createClass({
             id="url"
             placeholder="Url"
             value={this.state.url.value}
-            onChange={this.handleUrlChange} />
+            onChange={this.handleUrlChange}
+            autoComplete="off" />
         </fieldset>
         <fieldset className="form-group">
-          <label htmlFor="fileName">File Name</label>
+          <label htmlFor="fileName">File Name <small className="text-muted">(Please exclude the file extension)</small></label>
           <input
             type="text"
             className="form-control"
             id="fileName"
             placeholder="File Name"
             value={this.state.fileName.value}
-            onChange={this.handleFileNameChange} />
+            onChange={this.handleFileNameChange}
+            autoComplete="off" />
         </fieldset>
         <button type="submit" className="btn btn-primary">Submit</button>
       </form>
