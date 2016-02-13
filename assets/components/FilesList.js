@@ -4,6 +4,7 @@ import Reflux from 'reflux';
 import FileStore from '../lib/FileStore';
 
 const NO_FILE_LI = <li className="list-group-item list-group-item-warning">No Files</li>;
+const IMG_REGEX = (/\.(gif|jpg|jpeg|tiff|png)$/i);
 
 const FilesList = React.createClass({
   mixins: [Reflux.listenTo(FileStore, 'handleFilesChange')],
@@ -35,8 +36,35 @@ const FilesList = React.createClass({
     }
 
     return this.state.userFiles.map(function(file, idx) {
+      let fileSrc = `private/${file.fileName}`;
+      let fileIsImg = IMG_REGEX.test(file.fileName);
+      let imagePreview = null;
+      let previewBtn = null;
+      if (fileIsImg) {
+        let imgId = `img-preview-${idx}`;
+
+        previewBtn = (<a
+                        className="btn btn-info btn-sm text"
+                        data-toggle="collapse"
+                        href={'#' + imgId}
+                        aria-expanded="false"
+                        aria-controls={imgId} >+</a>);
+
+        imagePreview = (
+          <div className="collapse" id={imgId}>
+            <img src={fileSrc} className="img-fluid" alt={file.fileName} />
+          </div>
+        );
+      }
       return (
-        <li className="list-group-item" key={idx}>{file.fileName}</li>
+        <li className="list-group-item" key={idx}>
+          <strong>{file.fileName}&nbsp;</strong>
+          {previewBtn}
+          <span className="pull-xs-right">
+            <a href={fileSrc} download>Download&nbsp;</a>
+          </span>
+          {imagePreview}
+        </li>
       );
     })
   },
@@ -47,7 +75,9 @@ const FilesList = React.createClass({
 
     return this.state.otherFiles.map(function(file, idx) {
       return (
-        <li className="list-group-item" key={idx}>f{ile.fileName}</li>
+        <li className="list-group-item" key={idx}>
+          {file.fileName}
+        </li>
       );
     })
   },

@@ -81,6 +81,13 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
 
+function errorHandler(err, req, res, next) {
+  res.status(500);
+  res.json({ error: 'An Internal Error Occured.' });
+}
+
+app.use(errorHandler);
+
 // define some paths
 app.get('/', stormpath.loginRequired, function (req, res) {
     res.render('home', {user: req.user});

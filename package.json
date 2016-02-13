@@ -19,6 +19,7 @@
   "dependencies": {
     "body-parser": "^1.15.0",
     "bootstrap": "^4.0.0-alpha.2",
+    "classnames": "^2.2.3",
     "express": "^4.13.3",
     "express-handlebars": "^2.0.1",
     "express-stormpath": "^2.3.2",
