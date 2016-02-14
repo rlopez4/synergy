@@ -30,56 +30,44 @@ const FilesList = React.createClass({
 
     this.setState({userFiles, otherFiles});
   },
-  getUserFileItems() {
-    if (!this.state.userFiles.length) {
-      return NO_FILE_LI;
-    }
+  generateFileListItem(file, idx) {
+    let fileSrc = `private/${file.fileName}`;
+    let fileIsImg = IMG_REGEX.test(file.fileName);
+    let imagePreview = null;
+    let previewBtn = null;
+    if (fileIsImg) {
+      let imgId = `img-preview-${idx}`;
 
-    return this.state.userFiles.map(function(file, idx) {
-      let fileSrc = `private/${file.fileName}`;
-      let fileIsImg = IMG_REGEX.test(file.fileName);
-      let imagePreview = null;
-      let previewBtn = null;
-      if (fileIsImg) {
-        let imgId = `img-preview-${idx}`;
+      previewBtn = (<a
+                      className="btn btn-info btn-sm text"
+                      data-toggle="collapse"
+                      href={'#' + imgId}
+                      aria-expanded="false"
+                      aria-controls={imgId} >+</a>);
 
-        previewBtn = (<a
-                        className="btn btn-info btn-sm text"
-                        data-toggle="collapse"
-                        href={'#' + imgId}
-                        aria-expanded="false"
-                        aria-controls={imgId} >+</a>);
-
-        imagePreview = (
-          <div className="collapse" id={imgId}>
-            <img src={fileSrc} className="img-fluid" alt={file.fileName} />
-          </div>
-        );
-      }
-      return (
-        <li className="list-group-item" key={idx}>
-          <strong>{file.fileName}&nbsp;</strong>
-          {previewBtn}
-          <span className="pull-xs-right">
-            <a href={fileSrc} download>Download&nbsp;</a>
-          </span>
-          {imagePreview}
-        </li>
+      imagePreview = (
+        <div className="collapse" id={imgId}>
+          <img src={fileSrc} className="img-fluid" alt={file.fileName} />
+        </div>
       );
-    })
+    }
+    return (
+      <li className="list-group-item" key={idx}>
+        <strong>{file.fileName}&nbsp;</strong>
+        {previewBtn}
+        <span className="pull-xs-right">
+          <a href={fileSrc} download>Download&nbsp;</a>
+        </span>
+        {imagePreview}
+      </li>
+    );
   },
-  getOtherFileItems() {
-    if (!this.state.otherFiles.length) {
+  getFileListItems(files) {
+    if (!files || !files.length) {
       return NO_FILE_LI;
     }
 
-    return this.state.otherFiles.map(function(file, idx) {
-      return (
-        <li className="list-group-item" key={idx}>
-          {file.fileName}
-        </li>
-      );
-    })
+    return files.map(this.generateFileListItem);
   },
   render() {
     return (
@@ -91,7 +79,7 @@ const FilesList = React.createClass({
             </a>
           </div>
           <ul id="user-files" className="user-files list-group list-group-flush collapse in">
-            {this.getUserFileItems()}
+            {this.getFileListItems(this.state.userFiles)}
           </ul>
         </div>
         <div className="card">
@@ -101,7 +89,7 @@ const FilesList = React.createClass({
             </a>
           </div>
           <ul id="other-files" className="other-files list-group list-group-flush collapse in">
-            {this.getOtherFileItems()}
+            {this.getFileListItems(this.state.otherFiles)}
           </ul>
         </div>
       </section>

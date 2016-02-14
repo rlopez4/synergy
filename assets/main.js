@@ -6,8 +6,16 @@ import FilesList from './components/FilesList';
 const $ = window.jQuery;
 
 $('document').ready(function() {
-  ReactDOM.render(<ModalForms />, document.getElementById('modal-body'));
-  ReactDOM.render(<FilesList />, document.getElementById('files-list-container'));
+  let modalMountPoint = document.getElementById('modal-body');
+  let filesListMountPoint = document.getElementById('files-list-container');
+
+  if (!!modalMountPoint) {
+    ReactDOM.render(<ModalForms />, modalMountPoint);
+  }
+
+  if (!!filesListMountPoint) {
+    ReactDOM.render(<FilesList />, filesListMountPoint);
+  }
 
   $('#add-file-btn').on('click', function() {
     $('#synergy-modal').modal('show');

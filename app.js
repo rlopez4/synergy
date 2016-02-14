@@ -15,8 +15,11 @@ var app = express();
 var router = express.Router();
 
 var serverPort = process.env.PORT || 8000;
+var ENV = process.env['NODE_ENV'];
 var privateDir = __dirname + '/private';
 var staticMiddleware = express.static(privateDir);
+
+var isProd = (process.env['NODE_ENV'] === 'production');
 
 // set up handlebars as the rendering engine
 var hbs = exphbs.create({
@@ -84,9 +87,26 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 function errorHandler(err, req, res, next) {
   res.status(500);
   res.json({ error: 'An Internal Error Occured.' });
+};
+
+function prodErrorHandler(err, req, res, next) {
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500);
+  res.render('error', { error: err });
 }
 
-app.use(errorHandler);
+function pagenotfound(req, res, next) {
+  res.status(404).render('pagenotfound');
+};
+
+if (isProd) {
+  app.use(prodErrorHandler);
+}
+else {
+  app.use(errorHandler);
+}
 
 // define some paths
 app.get('/', stormpath.loginRequired, function (req, res) {
@@ -180,6 +200,9 @@ app.get('/private/:file', stormpath.loginRequired, function(req, res, next){
     req.url = req.url.replace(/^\/private/, '')
     staticMiddleware(req, res, next);
 });
+
+// add at the end
+app.use(pagenotfound);
 
 // start server when stormpath is ready
 app.on('stormpath.ready', function () {

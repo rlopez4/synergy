@@ -1,6 +1,6 @@
 {
   "name": "synergy",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "small web app to get around work proxy",
   "main": "app.js",
   "scripts": {
