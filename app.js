@@ -9,7 +9,7 @@ var _               = require('lodash');
 
 var logger          = require('./logger');
 var helpers         = require('./handlebarsHelpers');
-var download        = require('./lib/downloader');
+var download        = require('./lib/downloader').download;
 
 var app = express();
 var router = express.Router();
@@ -87,6 +87,8 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 function errorHandler(err, req, res, next) {
   res.status(500);
   res.json({ error: 'An Internal Error Occured.' });
+  logger.error(err);
+
 };
 
 function prodErrorHandler(err, req, res, next) {
@@ -94,7 +96,8 @@ function prodErrorHandler(err, req, res, next) {
     return next(err);
   }
   res.status(500);
-  res.render('error', { error: err });
+  res.json({ error: 'An Internal Error Occured.' });
+  logger.error(err);
 }
 
 function pagenotfound(req, res, next) {
@@ -162,7 +165,13 @@ app.post('/file', stormpath.loginRequired, function(req, res) {
     download({
       uri: url,
       fileName: fileName,
-      done: function(data) {
+      done: function(error, data) {
+
+        // if an error was returned it means that it didn't
+        // affect the file creation but still occured somewhere along the process
+        // so just log it
+        logger.error(error);
+
         data.created = new Date().getTime();
 
         // this is only here to attempt to save the files array again if
@@ -177,6 +186,7 @@ app.post('/file', stormpath.loginRequired, function(req, res) {
         // save the user
         req.user.customData.save(function(e) {
           if (e) {
+            logger.error(e);
             res.json({error: e});
           }
           else {
@@ -188,6 +198,7 @@ app.post('/file', stormpath.loginRequired, function(req, res) {
 
       },
       error: function(e) {
+        logger.error(e);
         res.json({
           error: e
         });

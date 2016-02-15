@@ -36,7 +36,7 @@ var logger = new(winston.Logger)({
     new (winston.transports.File)({
       name: 'info-file',
       level: 'info',
-      colorize: true,
+      colorize: false,
       timestamp: true,
       handleExceptions: true,
       maxsize: 5242880, //5MB
@@ -48,7 +48,7 @@ var logger = new(winston.Logger)({
     new (winston.transports.File)({
       name: 'error-file',
       level: 'error',
-      colorize: true,
+      colorize: false,
       timestamp: true,
       handleExceptions: true,
       maxsize: 5242880, //5MB

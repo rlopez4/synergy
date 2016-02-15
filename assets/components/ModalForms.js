@@ -30,7 +30,6 @@ const ModalForms = React.createClass({
         }
       }.bind(this))
       .fail(function(e) {
-        console.log(e);
         this.setState({ error: 'Something unexpected went wrong!' });
       }.bind(this));
   },
