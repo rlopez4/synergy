@@ -9,7 +9,8 @@ var _               = require('lodash');
 
 var logger          = require('./logger');
 var helpers         = require('./handlebarsHelpers');
-var download        = require('./lib/downloader').download;
+var downloader      = require('./lib/downloader');
+var downloadFile   = downloader.downloadFile;
 
 var app = express();
 var router = express.Router();
@@ -162,15 +163,10 @@ app.post('/file', stormpath.loginRequired, function(req, res) {
   else {
 
     // start the download!
-    download({
+    downloadFile({
       uri: url,
       fileName: fileName,
-      done: function(error, data) {
-
-        // if an error was returned it means that it didn't
-        // affect the file creation but still occured somewhere along the process
-        // so just log it
-        logger.error(error);
+      done: function(data) {
 
         data.created = new Date().getTime();
 
