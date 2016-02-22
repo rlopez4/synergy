@@ -1,5 +1,6 @@
 import React from 'react';
 import UrlForm from './UrlForm';
+import FileForm from './FileForm';
 import FileActions from '../lib/FileActions';
 
 const ModalForms = React.createClass({
@@ -11,16 +12,17 @@ const ModalForms = React.createClass({
   componentDidMount() {
     $('#synergy-modal').on('hidden.bs.modal', function() {
       this.refs.urlForm.clearForm();
+      this.refs.fileForm.clearForm();
       this.setState({error: ''});
     }.bind(this));
   },
   componentWillUnmount() {
     $('#synergy-modal').off('hidden.bs.modal');
   },
-  handleFormSubmit(data) {
-    $.post('/file', data)
-      .done(function(result) {
-        if (result.error) {
+  handleUrlFormSubmit(data) {
+    $.post('/urlFile', data)
+      .done((result) =>{
+        if (result.error && result.error.message) {
           this.setState({error: result.error.message });
         }
         else {
@@ -28,10 +30,39 @@ const ModalForms = React.createClass({
           this.setState({ error: '' });
           $('#synergy-modal').modal('hide');
         }
-      }.bind(this))
-      .fail(function(e) {
+      })
+      .fail((e) => {
         this.setState({ error: 'Something unexpected went wrong!' });
-      }.bind(this));
+      });
+  },
+  handleFileFormSubmit(data) {
+    let formData = new FormData();
+
+    formData.append('fileName', data.fileName);
+    formData.append('file', data.file, data.file.name);
+
+    $.ajax({
+      url: '/userFile',
+      type: 'POST',
+      data: formData,
+      cache: false,
+      dataType: 'json',
+      processData: false,
+      contentType: false,
+      success: (result) => {
+        if (result.error && result.error.message) {
+          this.setState({ error: result.error.message });
+        }
+        else {
+          FileActions.addItem(result);
+          this.setState({ error: '' });
+          $('#synergy-modal').modal('hide');
+        }
+      },
+      error: (jqXHR, textStatus, errorThrown) => {
+        this.setState({ error: 'Something unexpected went wrong!' });
+      }
+    });
   },
   render() {
     let errorMessage = null;
@@ -54,10 +85,10 @@ const ModalForms = React.createClass({
 
         <div className="tab-content">
           <div className="tab-pane active" id="url-form-tab" role="tabpanel">
-            <UrlForm ref="urlForm" onSubmit={this.handleFormSubmit} />
+            <UrlForm ref="urlForm" onSubmit={this.handleUrlFormSubmit} />
           </div>
           <div className="tab-pane" id="file-upload-tab" role="tabpanel">
-            <p>//TODO</p>
+            <FileForm ref="fileForm" onSubmit={this.handleFileFormSubmit} />
           </div>
         </div>
       </section>

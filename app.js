@@ -5,6 +5,9 @@ var bodyParser      = require('body-parser')
 var winston         = require('winston');
 var exphbs          = require('express-handlebars');
 var fs              = require('fs');
+var path            = require('path');
+var multer          = require('multer');
+var mime            = require('mime');
 var _               = require('lodash');
 
 var logger          = require('./logger');
@@ -15,12 +18,18 @@ var downloadFile   = downloader.downloadFile;
 var app = express();
 var router = express.Router();
 
+/**
+ *
+ * Set up variables
+ *
+ */
 var serverPort = process.env.PORT || 8000;
 var ENV = process.env['NODE_ENV'];
 var privateDir = __dirname + '/private';
 var staticMiddleware = express.static(privateDir);
-
 var isProd = (process.env['NODE_ENV'] === 'production');
+var IGNORED_FILES = ['.DS_Store', '.keep'];
+var MAX_FILE_SIZE = 1073741824;
 
 // set up handlebars as the rendering engine
 var hbs = exphbs.create({
@@ -28,12 +37,49 @@ var hbs = exphbs.create({
   helpers: helpers
 });
 
+var storage = multer.diskStorage({
+  destination: './private',
+  filename: function (req, file, cb) {
+    var fileExt = mime.extension(file.mimetype) || '';
+    var fileName = file.originalname || '';
+    var originExt = path.extname(fileName);
+
+    fileExt = (fileExt) ? '.' + fileExt : '';
+
+    if (req.body.fileName) {
+      fileName = req.body.fileName + fileExt;
+    }
+    else {
+      fileName = fileName.substring(0, fileName.lastIndexOf(originExt));
+      fileName += fileExt;
+    }
+
+    // add the final file name to the request because that's the only way to get it
+    // to the done callback
+
+    req.finalFileName = fileName;
+    cb(null, fileName);
+  }
+});
+
+var upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: MAX_FILE_SIZE
+  }
+}).single('file');
+
+/**
+ *
+ * Set up the aplication middleware
+ *
+ */
+
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 
 // set the public static dir
 app.use('/public', express.static(__dirname + '/public'));
-
 
 // set up the logger
 app.use(expressWinston.logger({
@@ -78,12 +124,16 @@ app.use(stormpath.init(app, {
   }
 }));
 
-var IGNORED_FILES = ['.DS_Store', '.keep']
-
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
+
+/**
+ *
+ * Create the error handlers
+ *
+ */
 
 function errorHandler(err, req, res, next) {
   res.status(500);
@@ -112,7 +162,11 @@ else {
   app.use(errorHandler);
 }
 
-// define some paths
+/**
+ *
+ * Set up the paths
+ *
+ */
 app.get('/', stormpath.loginRequired, function (req, res) {
     res.render('home', {user: req.user});
 });
@@ -150,7 +204,46 @@ app.get('/files', stormpath.loginRequired, function(req, res) {
   res.json({files: files});
 });
 
-app.post('/file', stormpath.loginRequired, function(req, res) {
+app.post('/userFile', stormpath.loginRequired, function(req, res) {
+  upload(req, res, function(err) {
+    if (err) {
+      logger.error(err);
+      res.json({
+        error: err
+      });
+      return;
+    }
+
+    var data = {
+      created: new Date().getTime(),
+      fileName: req.finalFileName
+    };
+
+    // this is only here to attempt to save the files array again if
+    // it wasn't added at account creation due to error
+    if (!req.user.customData.files || !req.user.customData.files.length) {
+      req.user.customData.files = [];
+    }
+
+    // push the filename onto the list of files
+    req.user.customData.files.push(data);
+
+    // save the user
+    req.user.customData.save(function(e) {
+      if (e) {
+        logger.error(e);
+        res.json({error: e});
+      }
+      else {
+        // update this property for the response
+        data.isUserFile = true;
+        res.json(data);
+      }
+    });
+  });
+});
+
+app.post('/urlFile', stormpath.loginRequired, function(req, res) {
   var url = req.body.url;
   var fileName = req.body.fileName;
 
@@ -208,9 +301,19 @@ app.get('/private/:file', stormpath.loginRequired, function(req, res, next){
     staticMiddleware(req, res, next);
 });
 
+/**
+ *
+ * Add 404 page handler
+ *
+ */
 // add at the end
 app.use(pagenotfound);
 
+/**
+ *
+ * Start server
+ *
+ */
 // start server when stormpath is ready
 app.on('stormpath.ready', function () {
   app.listen(serverPort, function() {
